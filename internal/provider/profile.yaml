@@ -1,0 +1,43 @@
+id: beget
+display_name: Beget
+env_prefix: BEGET_S3_
+uri_scheme: beget-s3
+binary: beget-s3
+default_pool: ru1
+path_style: true
+pools:
+  - id: ru1
+    endpoint: https://s3.ru1.storage.beget.cloud
+    location: Россия
+    multi_az: false
+    storage_classes: [STANDARD]
+storage_classes:
+  - {id: STANDARD, name_ru: Базовое хранилище, price_rub_gb_month: 2.1, verified: false, checked_at: "2026-10-10"}
+features:
+  bucket_create: false
+  bucket_delete: false
+  bucket_config: false
+  versioning: false
+  object_lock_config: false
+  object_retention: false
+  object_tagging: false
+  bucket_tagging: false
+  lifecycle: false
+  cors: false
+  bucket_policy: false
+  conditional_writes: false
+  conditional_delete: false
+  multipart: true
+  presign: false
+  acl: false
+limits:
+  max_put_bytes: 5000000000
+  max_parts: 10000
+  rate_limits: {all_per_account: 2000, read_per_bucket: 2000}
+presign_max_seconds: 604800
+verified: false
+presign_note: "Панель Beget создаёт ссылки максимум на 7 дней; потолок внешнего SigV4 GET/PUT не установлен, инструменты presign выключены. Bucket API — только панель; нужна живая проверка."
+docs_urls:
+  - https://beget.com/ru/kb/manual/obektnoe-hranilishche-s3-v-beget
+  - https://beget.com/ru/kb/faq/cloud/podklyuchenie-k-obektnomu-hranilishchu-s3-pri-pomoshchi-klientov-aws-cli-s3cmd-cyberduck-sdk
+  - https://beget.com/ru/cloud/storage

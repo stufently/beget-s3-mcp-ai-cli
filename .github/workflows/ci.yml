@@ -1,0 +1,11 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    uses: stufently/s3-mcp-ai-cli-kit/.github/workflows/provider-ci.yml@v0.1.1
+    with:
+      kit-ref: v0.1.1

@@ -1,0 +1,10 @@
+version: "2"
+linters:
+  default: none
+  enable: [govet, staticcheck, errcheck, ineffassign, unused, gosec]
+  exclusions:
+    rules:
+      # Test paths come from t.TempDir fixtures, not untrusted production input.
+      - linters: [gosec]
+        text: 'G304:'
+        path: '(_test\.go$|^conformance/)'
