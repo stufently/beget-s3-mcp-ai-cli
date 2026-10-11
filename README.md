@@ -1,12 +1,14 @@
 # Beget S3 MCP Server & AI CLI
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-development-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-Beget S3 Object Storage через MCP и CLI: Claude Code, Cursor и Codex помогают выполнять бэкап и работать с файлами, а AI-агент получает ограниченный доступ и подтверждение опасных действий.
+MCP-сервер и CLI для S3 Бегет (Beget): подключение готового бакета к Claude Code, Cursor и Codex, просмотр файлов и восстановление бэкапов. Бинарь `beget-s3` учитывает возможности панели и консервативные ограничения S3-профиля.
+
+[English guide](README.en.md) · [Каталог S3 MCP-серверов](https://stufently.github.io/s3-mcp-ai-cli-kit/)
 
 ## English
 
-A single Go binary for Beget Object Storage: a stdio MCP server, streaming CLI and installable agent skill. Read-only MCP access is the default; independent write/delete/admin levels, bucket/prefix scope, human approval and confined local file access protect data. Large files use streaming file operations and multipart uploads according to the profile. See the [full English guide](README.en.md).
+A Go MCP server, CLI and agent skill for Beget S3 Object Storage. Connect Claude Code, Cursor and Codex to scoped object storage for inspection and backup recovery. Buckets and share links use the console; presign and bucket API are disabled. See the [full English guide](README.en.md).
 
 ## Быстрый старт
 
@@ -67,6 +69,18 @@ Codex: ~/.codex/config.toml. Существующая таблица требу�
 
 Аналитика сканирует максимум max_scan (по умолчанию 10000); partial/token отмечают неполный результат. Prefix usage выдаёт страницы агрегатов через next_result_offset. Это не биллинг.
 
+## Сценарий: Просмотр и восстановление файлов из готового бакета
+
+Создайте бакет в панели Beget и используйте ключ доступа к нему. Для проверки резервной копии достаточно списка объектов, метаданных и скачивания; создавать бакет или presigned-ссылку через этот профиль не нужно:
+
+```bash
+beget-s3 ls backups/daily/ --json
+beget-s3 stat backups/daily/archive.tar
+beget-s3 cp s3://backups/daily/archive.tar ./restored-beget.tar
+```
+
+Примеры используют существующий бакет `backups` и объект `daily/archive.tar`; замените их своими значениями. Профиль и API облака ещё требуют [живой проверки](TASKS.md).
+
 ## CLI
 
 ```bash
@@ -123,6 +137,12 @@ Lifecycle, ACL, bucket tagging и object retention могут поддержив
 
 ## FAQ
 
+**Можно ли создать бакет Бегет командой mb или через MCP?** Нет: `bucket_create`, `bucket_delete` и `bucket_config` выключены. Создайте бакет в панели Beget; [таблица совместимости](docs/compat.md) показывает ограничения текущего профиля.
+
+**Почему нет presigned-ссылок Beget в CLI и MCP?** Внешний SigV4 presign не подтверждён, поэтому `presign=false`. Ссылки панели описаны в [ресерче Beget](docs/research/beget-s3.md); это не гарантия поддержки внешних GET/PUT-ссылок.
+
+**Как скачать бэкап из S3 Бегет через CLI?** После `beget-s3 auth set` выполните `stat bucket/key`, затем `cp s3://bucket/key ./new-file`. Для MCP-скачивания дополнительно задайте `BEGET_S3_FILE_ROOT`, ограничивающий локальные пути.
+
 **Что такое MCP-сервер?** Программа предоставляет агентам инструменты и ресурсы через Model Context Protocol; здесь stdio.
 
 **Как подключить MCP-сервер к Claude Code?** Сохрани ключи auth set, затем используй project install либо напечатанную user-команду.
@@ -136,7 +156,18 @@ Lifecycle, ACL, bucket tagging и object retention могут поддержив
 
 ## Другие провайдеры
 
-Семейство: Selectel, Yandex Cloud, VK Cloud, Cloud.ru, Timeweb Cloud, MWS, Beget. Все используют [общий kit](https://github.com/stufently/s3-mcp-ai-cli-kit).
+[Общий каталог: MCP-серверы и CLI для российских S3](https://stufently.github.io/s3-mcp-ai-cli-kit/).
+
+| Провайдер | Репозиторий | Сценарий |
+|---|---|---|
+| Selectel | [selectel-s3-mcp-ai-cli](https://github.com/stufently/selectel-s3-mcp-ai-cli) | Выбор пула и восстановление резервных копий |
+| Yandex Cloud | [yandex-s3-mcp-ai-cli](https://github.com/stufently/yandex-s3-mcp-ai-cli) | Инвентаризация объектов и проверка версий бэкапов |
+| VK Cloud | [vkcloud-s3-mcp-ai-cli](https://github.com/stufently/vkcloud-s3-mcp-ai-cli) | Проверка Hotbox/Icebox и доступ к нужному региону |
+| Cloud.ru | [cloudru-s3-mcp-ai-cli](https://github.com/stufently/cloudru-s3-mcp-ai-cli) | Диагностика доступа к Evolution Object Storage |
+| Timeweb Cloud | [timeweb-s3-mcp-ai-cli](https://github.com/stufently/timeweb-s3-mcp-ai-cli) | Восстановление архивов и учёт объёма префикса |
+| MWS | [mws-s3-mcp-ai-cli](https://github.com/stufently/mws-s3-mcp-ai-cli) | Проверка HMAC-доступа и короткие ссылки на архивы |
+| Beget | [beget-s3-mcp-ai-cli](https://github.com/stufently/beget-s3-mcp-ai-cli) | Просмотр и восстановление файлов из готового бакета |
+| Shared Go kit | [s3-mcp-ai-cli-kit](https://github.com/stufently/s3-mcp-ai-cli-kit) | Общие MCP, CLI, защиты и CI |
 
 ## Лицензия
 

@@ -1,6 +1,8 @@
 # Beget S3 MCP Server & AI CLI
 
-Beget S3 Object Storage for Claude Code, Cursor and Codex: a stdio MCP server, streaming CLI and embedded agent skill in one Go binary. Read-only MCP is the default; large backup files travel through presigned URLs, multipart or confined file tools.
+A Go MCP server, CLI and installable agent skill for Beget S3 Object Storage. Use Claude Code, Cursor and Codex to inspect objects, recover backups and work with scoped bucket prefixes. Buckets and share links use the console; presign and bucket API are disabled. Read-only MCP access is the default. Independent permission levels control writes; destructive operations use the configured approval policy.
+
+[Русское руководство](README.md) · [Russian S3 MCP server directory](https://stufently.github.io/s3-mcp-ai-cli-kit/en/)
 
 ## Features
 
@@ -59,6 +61,18 @@ Lists return at most 1000 items plus continuation tokens; versions/multipart hav
 
 Analytics scan max_scan entries (default 10000), marking partial results and tokens. Prefix aggregates page via next_result_offset. They are not billing estimates.
 
+## Use case: Browse and restore files from an existing bucket
+
+Create the bucket in the Beget console and use its access credentials. Inspect backups by listing objects, reading metadata and downloading files; bucket creation and presigned URLs are not exposed by this profile:
+
+```bash
+beget-s3 ls backups/daily/ --json
+beget-s3 stat backups/daily/archive.tar
+beget-s3 cp s3://backups/daily/archive.tar ./restored-beget.tar
+```
+
+Examples assume an existing `backups` bucket and `daily/archive.tar` object; replace them with your own names. Cloud compatibility still requires [live verification](TASKS.md).
+
 ## CLI
 
 ```bash
@@ -113,6 +127,12 @@ Lifecycle, ACL, bucket tagging and retention may be cloud features, but this bin
 
 ## FAQ
 
+**Can I create a Beget bucket with mb or MCP?** No. `bucket_create`, `bucket_delete` and `bucket_config` are disabled. Create the bucket in the Beget console; the [compatibility table](docs/compat.md) documents this profile.
+
+**Why are Beget presigned URLs absent from CLI and MCP?** External SigV4 presigning remains unverified, so `presign=false`. Console-generated links in [Beget research](docs/research/beget-s3.md) do not prove external signed GET/PUT support.
+
+**How do I download a Beget S3 backup with the CLI?** After `beget-s3 auth set`, inspect `stat bucket/key`, then use `cp s3://bucket/key ./new-file`. MCP downloads additionally require `BEGET_S3_FILE_ROOT` to confine local paths.
+
 **What is an MCP server?** A program exposes agent tools/resources through Model Context Protocol; this server uses stdio.
 
 **How do I connect Claude Code?** Save keys with auth set and use project install or the printed user command.
@@ -124,7 +144,20 @@ Lifecycle, ACL, bucket tagging and retention may be cloud features, but this bin
 **Which features are available?** Read capabilities and [compat](docs/compat.md). Registration follows the profile; this version does not configure lifecycle, ACL, bucket tagging or retention.
 
 
-Family: Selectel, Yandex Cloud, VK Cloud, Cloud.ru, Timeweb Cloud, MWS and Beget share the same [kit](https://github.com/stufently/s3-mcp-ai-cli-kit).
+## Related S3 MCP servers
+
+[Browse the full provider directory](https://stufently.github.io/s3-mcp-ai-cli-kit/en/).
+
+| Provider | Repository | Use case |
+|---|---|---|
+| Selectel | [selectel-s3-mcp-ai-cli](https://github.com/stufently/selectel-s3-mcp-ai-cli) | Pool selection and backup recovery |
+| Yandex Cloud | [yandex-s3-mcp-ai-cli](https://github.com/stufently/yandex-s3-mcp-ai-cli) | Object inventory and backup version inspection |
+| VK Cloud | [vkcloud-s3-mcp-ai-cli](https://github.com/stufently/vkcloud-s3-mcp-ai-cli) | Hotbox/Icebox inspection and regional access |
+| Cloud.ru | [cloudru-s3-mcp-ai-cli](https://github.com/stufently/cloudru-s3-mcp-ai-cli) | Evolution Object Storage access diagnostics |
+| Timeweb Cloud | [timeweb-s3-mcp-ai-cli](https://github.com/stufently/timeweb-s3-mcp-ai-cli) | Archive recovery and bounded prefix usage |
+| MWS | [mws-s3-mcp-ai-cli](https://github.com/stufently/mws-s3-mcp-ai-cli) | HMAC access checks and short-lived archive URLs |
+| Beget | [beget-s3-mcp-ai-cli](https://github.com/stufently/beget-s3-mcp-ai-cli) | Browse and restore files from an existing bucket |
+| Shared Go kit | [s3-mcp-ai-cli-kit](https://github.com/stufently/s3-mcp-ai-cli-kit) | Shared MCP, CLI, safety and CI |
 
 ## License
 
