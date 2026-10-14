@@ -1,0 +1,10 @@
+s3_get_object
+s3_head_object
+s3_largest_objects
+s3_list_buckets
+s3_list_multipart_uploads
+s3_list_objects
+s3_list_parts
+s3_prefix_usage
+s3_preview_object
+s3_unfinished_uploads
