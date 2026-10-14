@@ -1,0 +1,110 @@
+{
+  "manifest_version": "0.3",
+  "name": "beget-s3-mcp-ai-cli",
+  "display_name": "Beget",
+  "description": "Beget S3 MCP server and AI CLI with scoped access and signed human approvals.",
+  "author": {
+    "name": "stufently"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stufently/beget-s3-mcp-ai-cli"
+  },
+  "homepage": "https://github.com/stufently/beget-s3-mcp-ai-cli",
+  "support": "https://github.com/stufently/beget-s3-mcp-ai-cli/issues",
+  "license": "MIT",
+  "keywords": ["s3", "mcp", "object-storage", "beget"],
+  "server": {
+    "type": "binary",
+    "entry_point": "server/beget-s3",
+    "mcp_config": {
+      "command": "${__dirname}/server/beget-s3",
+      "args": [
+        "mcp",
+        "--allow-write=${user_config.allow_write}",
+        "--allow-delete=${user_config.allow_delete}",
+        "--allow-admin=${user_config.allow_admin}"
+      ],
+      "env": {
+        "BEGET_S3_ACCESS_KEY_ID": "${user_config.access_key_id}",
+        "BEGET_S3_SECRET_ACCESS_KEY": "${user_config.secret_access_key}",
+        "BEGET_S3_POOL": "${user_config.pool}",
+        "BEGET_S3_ENDPOINT": "${user_config.endpoint}",
+        "BEGET_S3_DESTRUCTIVE_POLICY": "${user_config.destructive_policy}",
+        "BEGET_S3_ALLOWED_BUCKETS": "${user_config.allowed_buckets}",
+        "BEGET_S3_ALLOWED_PREFIXES": "${user_config.allowed_prefixes}",
+        "BEGET_S3_FILE_ROOT": "${user_config.file_root}"
+      }
+    }
+  },
+  "user_config": {
+    "access_key_id": {
+      "type": "string",
+      "title": "Access key ID",
+      "description": "S3 access key ID. Required. The desktop host stores it as a secret and passes it only to this server.",
+      "sensitive": true,
+      "required": true
+    },
+    "secret_access_key": {
+      "type": "string",
+      "title": "Secret access key",
+      "description": "S3 secret access key. Required. The desktop host stores it as a secret and passes it only to this server.",
+      "sensitive": true,
+      "required": true
+    },
+    "pool": {
+      "type": "string",
+      "title": "Pool",
+      "description": "Signing pool. The default is this provider's usual pool. An empty value is not left empty: the desktop host fills in that default.",
+      "default": "ru1"
+    },
+    "endpoint": {
+      "type": "string",
+      "title": "Endpoint",
+      "description": "Optional S3 endpoint override. Empty uses the endpoint of the selected pool.",
+      "default": ""
+    },
+    "allowed_buckets": {
+      "type": "string",
+      "title": "Allowed buckets",
+      "description": "Comma-separated bucket allowlist. Empty does not add a bucket allowlist.",
+      "default": ""
+    },
+    "allowed_prefixes": {
+      "type": "string",
+      "title": "Allowed prefixes",
+      "description": "Comma-separated bucket/prefix/ allowlist. Empty does not add a prefix allowlist.",
+      "default": ""
+    },
+    "destructive_policy": {
+      "type": "string",
+      "title": "Destructive policy",
+      "description": "How a destructive call asks for a person. Default confirm asks before each one. Empty is treated as confirm.",
+      "default": "confirm"
+    },
+    "file_root": {
+      "type": "directory",
+      "title": "File root",
+      "description": "Directory for local upload and download. Empty disables confined file transfer.",
+      "default": ""
+    },
+    "allow_write": {
+      "type": "boolean",
+      "title": "Allow write",
+      "description": "Register write tools. Off leaves write disabled. With write, delete and admin all off, the server is read-only.",
+      "default": false
+    },
+    "allow_delete": {
+      "type": "boolean",
+      "title": "Allow delete",
+      "description": "Register delete tools. Off leaves delete disabled. With write, delete and admin all off, the server is read-only.",
+      "default": false
+    },
+    "allow_admin": {
+      "type": "boolean",
+      "title": "Allow admin",
+      "description": "Register admin tools. Off leaves bucket administration disabled. With write, delete and admin all off, the server is read-only.",
+      "default": false
+    }
+  }
+}

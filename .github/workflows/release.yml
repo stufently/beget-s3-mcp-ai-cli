@@ -1,30 +1,133 @@
 name: Release
+
 on:
   push:
     tags: ["v*"]
+
 permissions:
-  contents: write
-  packages: write
+  contents: read
+
 jobs:
-  release:
+  goreleaser:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     steps:
       - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
+      - name: Check the tag against server.json
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          got="$(jq -r '.version' server.json)"
+          id="$(jq -r '.packages[0].identifier' server.json)"
+          want="ghcr.io/stufently/beget-s3-mcp-ai-cli:${version}"
+          if [ "$version" != "$got" ] || [ "$id" != "$want" ]; then
+            printf 'tag %s does not match server.json version %s or identifier %s (want %s)\n' "$version" "$got" "$id" "$want" >&2
+            exit 1
+          fi
       - name: Release binaries in Docker
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           mkdir -p "$HOME/.cache/sel-s3-go"
           docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e GOCACHE=/cache/build -e GOMODCACHE=/cache/mod -e GITHUB_TOKEN -v "$HOME/.cache/sel-s3-go:/cache" -v "$PWD:/src" -w /src goreleaser/goreleaser:v2.18.3 release --clean
+      - name: Attest the release archives
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: dist/checksums.txt
+
+  image:
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/checkout@v7.0.1
       - uses: docker/setup-buildx-action@v4.4.1
       - name: Publish image
+        id: image
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
-          TAG: ${{ github.ref_name }}
-          COMMIT: ${{ github.sha }}
         run: |
+          set -euo pipefail
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$OWNER" --password-stdin
-          docker buildx build --platform linux/amd64,linux/arm64 --build-arg "BUILD_UID=$(id -u)" --build-arg "BUILD_GID=$(id -g)" --build-arg "VERSION=${TAG#v}" --build-arg "COMMIT=$COMMIT" -t "ghcr.io/$OWNER/beget-s3-mcp-ai-cli:${TAG#v}" --push .
+          tag="${GITHUB_REF_NAME#v}"
+          meta="${RUNNER_TEMP}/image-meta.json"
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --build-arg "BUILD_UID=$(id -u)" \
+            --build-arg "BUILD_GID=$(id -g)" \
+            --build-arg "VERSION=${tag}" \
+            --build-arg "COMMIT=${GITHUB_SHA}" \
+            --metadata-file "$meta" \
+            -t "ghcr.io/stufently/beget-s3-mcp-ai-cli:${tag}" \
+            --push \
+            .
+          digest="$(jq -r '."containerimage.digest"' "$meta")"
+          case "$digest" in
+            sha256:*) printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT" ;;
+            *) printf 'no digest: %s\n' "$digest" >&2; exit 1 ;;
+          esac
+      - name: Attest the container image
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ghcr.io/stufently/beget-s3-mcp-ai-cli
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+  mcpb:
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build .mcpb bundles
+        run: VERSION="${GITHUB_REF_NAME#v}" bash scripts/build-mcpb.sh
+      - name: Add .mcpb lines to checksums.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release download "$GITHUB_REF_NAME" --pattern checksums.txt --dir dist-mcpb
+          bash scripts/mcpb-checksums.sh dist-mcpb dist-mcpb/checksums.txt
+      - name: Attest the .mcpb bundles
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist-mcpb/*.mcpb
+      - name: Attach .mcpb bundles to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" dist-mcpb/*.mcpb dist-mcpb/checksums.txt --clobber
+
+  registry:
+    needs: [image, mcpb]
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Publish to the MCP Registry
+        run: |
+          set -euo pipefail
+          curl -fsSL -o mcp-publisher.tar.gz "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz"
+          printf '%s\n' "a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc  mcp-publisher.tar.gz" | sha256sum -c -
+          tar -xzf mcp-publisher.tar.gz
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish server.json
