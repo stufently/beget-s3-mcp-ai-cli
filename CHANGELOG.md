@@ -1,8 +1,8 @@
 # Changelog
 
 ## Unreleased
-- Add catalog metadata, Desktop Extension bundles and Registry release jobs.
 
+- Add catalog metadata, Desktop Extension bundles and Registry release jobs.
 - Add provider-specific Russian/English discovery text, recovery examples, FAQ and links to all S3 MCP projects.
 - Add social preview artwork and a shared bilingual provider directory.
 
