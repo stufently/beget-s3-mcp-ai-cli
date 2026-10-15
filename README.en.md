@@ -12,7 +12,7 @@ Streaming object CRUD, copy, multipart and presigned URLs follow the profile. Ve
 
 ## Quick start
 
-Use a platform binary from Releases once published, or build with Go 1.27.2:
+Use a platform binary from [Releases](https://github.com/stufently/beget-s3-mcp-ai-cli/releases/latest) (v0.1.0 is out; also listed in the MCP Registry and Smithery), or build with Go 1.27.2:
 
 ```bash
 bash scripts/go.sh go build -o beget-s3 ./cmd/beget-s3
@@ -26,7 +26,7 @@ auth set reads the key ID and secret without terminal echo; non-TTY input suppli
 
 Resolution: flags > env > file. Variables: BEGET_S3_ACCESS_KEY_ID, BEGET_S3_SECRET_ACCESS_KEY, BEGET_S3_POOL (ru1), BEGET_S3_ENDPOINT. HTTP requires BEGET_S3_ALLOW_INSECURE=1.
 
-After publication: ghcr.io/stufently/beget-s3-mcp-ai-cli:0.1.0. Build locally with docker build -t beget-s3 .; the scratch image runs MCP as uid 65532 with CA certificates. Supply a private credentials environment/file setup.
+Image: ghcr.io/stufently/beget-s3-mcp-ai-cli:0.1.0. Build locally with docker build -t beget-s3 .; the scratch image runs MCP as uid 65532 with CA certificates. Supply a private credentials environment/file setup.
 
 ## Connect to Claude Code, Cursor, Codex
 
