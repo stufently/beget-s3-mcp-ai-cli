@@ -4,7 +4,7 @@ go 1.27
 
 require (
 	github.com/google/jsonschema-go v0.4.3
-	github.com/stufently/s3-mcp-ai-cli-kit v0.1.1
+	github.com/stufently/s3-mcp-ai-cli-kit v0.1.2
 )
 
 require (
