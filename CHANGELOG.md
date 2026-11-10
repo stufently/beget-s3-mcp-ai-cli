@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
+
+- Update s3-mcp-ai-cli-kit to v0.1.2: MCP tools now explain purpose, sibling tools, return fields and approval or overwrite effects, and every input parameter has a schema description with limits and examples.
+
+## 0.1.0
 
 - Add catalog metadata, Desktop Extension bundles and Registry release jobs.
 - Add provider-specific Russian/English discovery text, recovery examples, FAQ and links to all S3 MCP projects.

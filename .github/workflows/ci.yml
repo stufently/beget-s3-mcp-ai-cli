@@ -6,6 +6,6 @@ permissions:
   contents: read
 jobs:
   verify:
-    uses: stufently/s3-mcp-ai-cli-kit/.github/workflows/provider-ci.yml@v0.1.1
+    uses: stufently/s3-mcp-ai-cli-kit/.github/workflows/provider-ci.yml@v0.1.2
     with:
-      kit-ref: v0.1.1
+      kit-ref: v0.1.2
